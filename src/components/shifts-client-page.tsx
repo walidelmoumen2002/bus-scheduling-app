@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -51,12 +52,14 @@ interface ShiftsClientPageProps {
     drivers: Driver[];
     buses: Bus[];
     routes: Route[];
-    user: User | null;
+    user: User;
 }
 
 export default function ShiftsClientPage({ initialShifts, drivers, buses, routes, user }: ShiftsClientPageProps) {
     const [shifts, setShifts] = useState<Shift[]>(initialShifts);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const router = useRouter();
+    const canAssignShift = user.role === 'admin' || user.role === 'dispatcher';
 
     // Form state
     const [driverId, setDriverId] = useState<string>('');
@@ -70,8 +73,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
     const [dateFilter, setDateFilter] = useState('');
     const [driverFilter, setDriverFilter] = useState('all');
     const [busFilter, setBusFilter] = useState('all');
-
-    const canManage = user?.role === 'admin' || user?.role === 'dispatcher';
 
     const filteredShifts = useMemo(() => {
         return shifts.filter(shift => {
@@ -118,24 +119,9 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
         });
 
         if (response.ok) {
-            const newShift = await response.json();
-            const driver = drivers.find(d => d.id === newShift.driverId);
-            const bus = buses.find(b => b.id === newShift.busId);
-            const route = routes.find(r => r.id === newShift.routeId);
-
-            const newShiftWithDetails: Shift = {
-                ...newShift,
-                driverName: driver?.name ?? null,
-                busPlateNumber: bus?.plateNumber ?? null,
-                routeOrigin: route?.origin ?? null,
-                routeDestination: route?.destination ?? null,
-                shiftStart: newShift.shiftStart,
-                shiftEnd: newShift.shiftEnd
-            };
-
-            setShifts([...shifts, newShiftWithDetails]);
             resetForm();
             setIsDialogOpen(false);
+            router.refresh();
         } else {
             const data = await response.json();
             setError(data.error || 'Failed to add shift');
@@ -146,7 +132,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Shift Schedule</h1>
-                {canManage &&
+                {canAssignShift && (
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
                         if (!open) resetForm();
@@ -225,7 +211,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                             </form>
                         </DialogContent>
                     </Dialog>
-                }
+                )}
             </div>
 
             {/* --- FILTER CONTROLS --- */}

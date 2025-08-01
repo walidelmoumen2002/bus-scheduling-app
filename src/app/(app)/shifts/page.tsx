@@ -3,6 +3,7 @@ import { shifts, drivers, buses, routes } from '@/db/schema';
 import ShiftsClientPage from '@/components/shifts-client-page';
 import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/session';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,8 +47,13 @@ async function getShiftsData() {
 }
 
 export default async function ShiftsPage() {
-    const { shifts, drivers, buses, routes } = await getShiftsData();
     const user = await getUser();
+
+    if (!user) {
+        redirect('/login');
+    }
+
+    const { shifts, drivers, buses, routes } = await getShiftsData();
 
     return (
         <ShiftsClientPage

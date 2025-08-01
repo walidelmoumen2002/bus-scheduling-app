@@ -22,8 +22,6 @@ export default function Header({ user }: { user: User }) {
         <header className="flex items-center justify-between p-4 border-b">
             <h1 className="text-xl font-bold">Bus Scheduler</h1>
             <nav className="flex items-center gap-4">
-                <Link href="/" className="text-sm font-medium hover:underline">Dashboard</Link>
-
                 {/* Viewer, Dispatcher, and Admin links */}
                 <Link href="/schedule" className="text-sm font-medium hover:underline">Schedule</Link>
 
