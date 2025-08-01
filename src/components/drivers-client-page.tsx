@@ -18,10 +18,11 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
+    DialogDescription, // Import DialogDescription
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
-// Define the type for a driver and user
+// Define types for Driver and User
 type Driver = {
     id: number;
     name: string;
@@ -36,32 +37,42 @@ type User = {
 
 export default function DriversClientPage({ initialDrivers, user }: { initialDrivers: Driver[], user: User }) {
     const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
-    const [name, setName] = useState('');
-    const [licenseNumber, setLicenseNumber] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
     const router = useRouter();
-
-    // Determine if the user has management permissions
     const canManage = user.role === 'admin' || user.role === 'dispatcher';
 
-    const handleAddDriver = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleAddNew = () => {
+        setCurrentDriver({ name: '', licenseNumber: '', available: true });
+        setIsDialogOpen(true);
+    };
 
-        const response = await fetch('/api/drivers', {
-            method: 'POST',
+    const handleEdit = (driver: Driver) => {
+        setCurrentDriver({ ...driver });
+        setIsDialogOpen(true);
+    };
+
+    const handleSaveDriver = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!currentDriver) return;
+
+        const isEditing = 'id' in currentDriver;
+        const url = isEditing ? `/api/drivers/${currentDriver.id}` : '/api/drivers';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, licenseNumber }),
+            body: JSON.stringify(currentDriver),
         });
 
         if (response.ok) {
-            const newDriver = await response.json();
-            setDrivers([...drivers, newDriver]);
-            setName('');
-            setLicenseNumber('');
             setIsDialogOpen(false);
-            router.refresh(); // Refresh the page to show the new driver
+            setCurrentDriver(null);
+            router.refresh();
         } else {
-            alert('Failed to add driver');
+            const data = await response.json();
+            alert(`Failed to save driver: ${data.error || 'Unknown error'}`);
         }
     };
 
@@ -75,8 +86,7 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
         });
 
         if (response.ok) {
-            setDrivers(drivers.filter(driver => driver.id !== id));
-            router.refresh(); // Refresh the page
+            router.refresh();
         } else {
             alert('Failed to delete driver');
         }
@@ -86,30 +96,53 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Manage Drivers</h1>
-                {canManage && (
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button>Add New Driver</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Driver</DialogTitle>
-                            </DialogHeader>
-                            <form onSubmit={handleAddDriver} className="grid gap-4 py-4">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="name">Name</Label>
-                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="licenseNumber">License Number</Label>
-                                    <Input id="licenseNumber" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
-                                </div>
-                                <Button type="submit">Add Driver</Button>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                )}
+                {canManage && <Button onClick={handleAddNew}>Add New Driver</Button>}
             </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{currentDriver && currentDriver.id ? 'Edit Driver' : 'Add New Driver'}</DialogTitle>
+                        {/* FIX: Add the DialogDescription for accessibility */}
+                        <DialogDescription>
+                            {currentDriver && currentDriver.id
+                                ? "Make changes to the driver's details below."
+                                : "Fill in the details to create a new driver."}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {currentDriver && (
+                        <form onSubmit={handleSaveDriver} className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="name">Name</Label>
+                                <Input
+                                    id="name"
+                                    value={currentDriver.name || ''}
+                                    onChange={(e) => setCurrentDriver({ ...currentDriver, name: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="licenseNumber">License Number</Label>
+                                <Input
+                                    id="licenseNumber"
+                                    value={currentDriver.licenseNumber || ''}
+                                    onChange={(e) => setCurrentDriver({ ...currentDriver, licenseNumber: e.target.value })}
+                                    required
+                                />
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Switch
+                                    id="available"
+                                    checked={currentDriver.available}
+                                    onCheckedChange={(checked) => setCurrentDriver({ ...currentDriver, available: checked })}
+                                />
+                                <Label htmlFor="available">Available for shifts</Label>
+                            </div>
+                            <Button type="submit">Save Changes</Button>
+                        </form>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <div className="border rounded-lg shadow-sm">
                 <Table>
@@ -131,10 +164,10 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
                                 <TableCell>{driver.available ? 'Yes' : 'No'}</TableCell>
                                 <TableCell>
                                     {canManage && (
-                                        <>
-                                            <Button variant="outline" size="sm" className="mr-2" disabled>Edit</Button>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => handleEdit(driver)}>Edit</Button>
                                             <Button variant="destructive" size="sm" onClick={() => handleDeleteDriver(driver.id)}>Delete</Button>
-                                        </>
+                                        </div>
                                     )}
                                 </TableCell>
                             </TableRow>
