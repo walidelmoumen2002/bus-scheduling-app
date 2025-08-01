@@ -20,7 +20,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 
-// Define the type for a route based on your schema
+
 type Route = {
     id: number;
     origin: string;

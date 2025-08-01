@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/select";
 
 
-// Define types based on schema
+
 type Driver = { id: number; name: string; licenseNumber: string; available: boolean };
 type Bus = { id: number; plateNumber: string; capacity: number };
 type Route = { id: number; origin: string; destination: string; estimatedDurationMinutes: number };
@@ -61,7 +61,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
     const router = useRouter();
     const canAssignShift = user.role === 'admin' || user.role === 'dispatcher';
 
-    // Form state
+
     const [driverId, setDriverId] = useState<string>('');
     const [busId, setBusId] = useState<string>('');
     const [routeId, setRouteId] = useState<string>('');
@@ -69,7 +69,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
     const [shiftEnd, setShiftEnd] = useState('');
     const [error, setError] = useState('');
 
-    // Filter state
+
     const [dateFilter, setDateFilter] = useState('');
     const [driverFilter, setDriverFilter] = useState('all');
     const [busFilter, setBusFilter] = useState('all');
@@ -145,7 +145,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                                 <DialogTitle>Assign New Shift</DialogTitle>
                             </DialogHeader>
                             <form onSubmit={handleAddShift} className="grid gap-4 py-4">
-                                {/* Driver Select */}
+
                                 <div className="grid gap-2">
                                     <Label htmlFor="driver">Driver</Label>
                                     <Select value={driverId} onValueChange={setDriverId}>
@@ -162,7 +162,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                                     </Select>
                                 </div>
 
-                                {/* Bus Select */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="bus">Bus</Label>
                                     <Select value={busId} onValueChange={setBusId}>
@@ -179,7 +178,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                                     </Select>
                                 </div>
 
-                                {/* Route Select */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="route">Route</Label>
                                     <Select value={routeId} onValueChange={setRouteId}>
@@ -196,7 +194,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                                     </Select>
                                 </div>
 
-                                {/* Shift Timestamps */}
                                 <div className="grid gap-2">
                                     <Label htmlFor="shiftStart">Shift Start</Label>
                                     <Input id="shiftStart" type="datetime-local" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)} required />
@@ -214,7 +211,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                 )}
             </div>
 
-            {/* --- FILTER CONTROLS --- */}
             <div className="flex items-center gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
                 <div className="grid gap-2">
                     <Label htmlFor="date-filter">Filter by Date</Label>

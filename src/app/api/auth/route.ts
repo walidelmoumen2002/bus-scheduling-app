@@ -15,25 +15,25 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Username and password are required' }, { status: 400 });
         }
 
-        // Find the user in the database
+
         const user = await db.select().from(users).where(eq(users.username, username)).limit(1);
 
         if (user.length === 0) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Compare the provided password with the hashed password in the database
+
         const isPasswordValid = await bcrypt.compare(password, user[0].password);
 
         if (!isPasswordValid) {
             return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
         }
 
-        // Create a JWT
+
         const token = await new SignJWT({ userId: user[0].id, role: user[0].role })
             .setProtectedHeader({ alg: 'HS256' })
             .setIssuedAt()
-            .setExpirationTime('1h') // Token expires in 1 hour
+            .setExpirationTime('1h')
             .sign(SECRET_KEY);
 
         const response = NextResponse.json({ message: 'Login successful' });
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
             httpOnly: true,
             secure: process.env.NODE_ENV !== 'development',
             sameSite: 'strict',
-            maxAge: 3600, // 1 hour
+            maxAge: 3600,
             path: '/',
         });
 

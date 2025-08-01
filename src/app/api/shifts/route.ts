@@ -4,7 +4,7 @@ import { shifts, drivers, buses, routes } from '@/db/schema';
 import { eq, and, or, lt, gt } from 'drizzle-orm';
 import { getUser } from '@/lib/session';
 
-// GET all shifts with related data
+
 export async function GET() {
     try {
         const allShifts = await db.select({
@@ -28,7 +28,7 @@ export async function GET() {
     }
 }
 
-// POST a new shift
+
 export async function POST(request: NextRequest) {
     const user = await getUser();
     if (user?.role !== 'admin' && user?.role !== 'dispatcher') {
@@ -48,9 +48,6 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Shift start time must be before shift end time.' }, { status: 400 });
         }
 
-        // --- Conflict Check ---
-        // A driver cannot have overlapping shifts.
-        // An overlap occurs if (new_start < existing_end) AND (new_end > existing_start)
         const existingShifts = await db.select()
             .from(shifts)
             .where(

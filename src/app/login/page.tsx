@@ -30,7 +30,7 @@ export default function LoginPage() {
         });
 
         if (response.ok) {
-            router.push('/'); // Redirect on successful login
+            router.push('/');
         } else {
             const data = await response.json();
             setError(data.error || 'Failed to login');

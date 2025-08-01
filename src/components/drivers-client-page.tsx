@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
-// Define types for Driver and User
+
 type Driver = {
     id: number;
     name: string;

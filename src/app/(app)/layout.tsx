@@ -2,7 +2,7 @@ import { getUser } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import Header from '@/components/header';
 
-// This line is crucial. It forces all pages using this layout to be dynamic.
+
 export const dynamic = 'force-dynamic';
 
 export default async function AppLayout({

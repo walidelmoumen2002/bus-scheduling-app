@@ -4,7 +4,7 @@ import { routes } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/session';
 
-// GET all routes
+
 export async function GET() {
     try {
         const allRoutes = await db.select().from(routes);
@@ -15,7 +15,7 @@ export async function GET() {
     }
 }
 
-// POST a new route
+
 export async function POST(request: NextRequest) {
     const user = await getUser();
     if (user?.role !== 'admin') {
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// DELETE a route
+
 export async function DELETE(request: NextRequest) {
     const user = await getUser();
     if (user?.role !== 'admin') {

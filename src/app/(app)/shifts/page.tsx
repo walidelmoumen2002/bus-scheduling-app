@@ -8,7 +8,7 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 async function getShiftsData() {
-    // Fetch all shifts with joined data
+
     const allShifts = await db.select({
         id: shifts.id,
         driverName: drivers.name,
@@ -24,13 +24,11 @@ async function getShiftsData() {
         .leftJoin(routes, eq(shifts.routeId, routes.id))
         .orderBy(shifts.shiftStart);
 
-    // Fetch all drivers, buses, and routes for the dropdowns
+
     const allDrivers = await db.select().from(drivers);
     const allBuses = await db.select().from(buses);
     const allRoutes = await db.select().from(routes);
 
-    // Drizzle returns Date objects, but they are not serializable for client components.
-    // Convert them to ISO strings.
     const serializableShifts = allShifts.map(shift => ({
         ...shift,
         shiftStart: shift.shiftStart.toISOString(),

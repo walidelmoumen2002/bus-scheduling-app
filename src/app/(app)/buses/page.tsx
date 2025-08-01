@@ -1,14 +1,13 @@
 import { db } from '@/db/drizzle';
 import { buses } from '@/db/schema';
 import BusesClientPage from '@/components/buses-client-page';
+import { getUser } from '@/lib/session';
 
-// Add this line to explicitly mark the page as dynamic
 export const dynamic = 'force-dynamic';
 
 export default async function BusesPage() {
-    // Fetch the initial data on the server
+    const user = await getUser();
+    // user is guaranteed by (app)/layout redirect, but fetch it for RBAC in UI
     const allBuses = await db.select().from(buses);
-
-    // Pass the data to the client component
-    return <BusesClientPage initialBuses={allBuses} />;
+    return <BusesClientPage initialBuses={allBuses} user={user!} />;
 }

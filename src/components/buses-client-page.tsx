@@ -20,7 +20,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 
-// Define the type for a bus based on your schema
+
 type Bus = {
     id: number;
     plateNumber: string;

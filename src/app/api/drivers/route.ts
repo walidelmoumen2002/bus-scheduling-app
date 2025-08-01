@@ -4,7 +4,7 @@ import { drivers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getUser } from '@/lib/session';
 
-// GET all drivers
+
 export async function GET() {
     try {
         const allDrivers = await db.select().from(drivers);
@@ -15,7 +15,7 @@ export async function GET() {
     }
 }
 
-// POST a new driver
+
 export async function POST(request: NextRequest) {
     const user = await getUser();
     if (user?.role !== 'admin' && user?.role !== 'dispatcher') {
