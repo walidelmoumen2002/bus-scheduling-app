@@ -21,7 +21,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 
-// Define the type for a driver based on your schema
+// Define the type for a driver and user
 type Driver = {
     id: number;
     name: string;
@@ -29,12 +29,20 @@ type Driver = {
     available: boolean;
 };
 
-export default function DriversClientPage({ initialDrivers }: { initialDrivers: Driver[] }) {
+type User = {
+    userId: number;
+    role: string;
+};
+
+export default function DriversClientPage({ initialDrivers, user }: { initialDrivers: Driver[], user: User }) {
     const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
     const [name, setName] = useState('');
     const [licenseNumber, setLicenseNumber] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
+
+    // Determine if the user has management permissions
+    const canManage = user.role === 'admin' || user.role === 'dispatcher';
 
     const handleAddDriver = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,27 +86,29 @@ export default function DriversClientPage({ initialDrivers }: { initialDrivers: 
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Manage Drivers</h1>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>Add New Driver</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Driver</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddDriver} className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="licenseNumber">License Number</Label>
-                                <Input id="licenseNumber" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
-                            </div>
-                            <Button type="submit">Add Driver</Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                {canManage && (
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button>Add New Driver</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Driver</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleAddDriver} className="grid gap-4 py-4">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="licenseNumber">License Number</Label>
+                                    <Input id="licenseNumber" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} required />
+                                </div>
+                                <Button type="submit">Add Driver</Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
 
             <div className="border rounded-lg shadow-sm">
@@ -120,8 +130,12 @@ export default function DriversClientPage({ initialDrivers }: { initialDrivers: 
                                 <TableCell>{driver.licenseNumber}</TableCell>
                                 <TableCell>{driver.available ? 'Yes' : 'No'}</TableCell>
                                 <TableCell>
-                                    <Button variant="outline" size="sm" className="mr-2" disabled>Edit</Button>
-                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteDriver(driver.id)}>Delete</Button>
+                                    {canManage && (
+                                        <>
+                                            <Button variant="outline" size="sm" className="mr-2" disabled>Edit</Button>
+                                            <Button variant="destructive" size="sm" onClick={() => handleDeleteDriver(driver.id)}>Delete</Button>
+                                        </>
+                                    )}
                                 </TableCell>
                             </TableRow>
                         ))}

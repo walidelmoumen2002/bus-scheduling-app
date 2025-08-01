@@ -1,5 +1,3 @@
-// src/app/(app)/layout.tsx
-
 import { getUser } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import Header from '@/components/header';

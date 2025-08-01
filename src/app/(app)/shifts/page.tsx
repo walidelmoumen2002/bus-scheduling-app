@@ -1,0 +1,58 @@
+import { db } from '@/db/drizzle';
+import { shifts, drivers, buses, routes } from '@/db/schema';
+import ShiftsClientPage from '@/components/shifts-client-page';
+import { eq } from 'drizzle-orm';
+
+export const dynamic = 'force-dynamic';
+
+async function getShiftsData() {
+    // Fetch all shifts with joined data
+    const allShifts = await db.select({
+        id: shifts.id,
+        driverName: drivers.name,
+        busPlateNumber: buses.plateNumber,
+        routeOrigin: routes.origin,
+        routeDestination: routes.destination,
+        shiftStart: shifts.shiftStart,
+        shiftEnd: shifts.shiftEnd,
+    })
+        .from(shifts)
+        .leftJoin(drivers, eq(shifts.driverId, drivers.id))
+        .leftJoin(buses, eq(shifts.busId, buses.id))
+        .leftJoin(routes, eq(shifts.routeId, routes.id))
+        .orderBy(shifts.shiftStart);
+
+    // Fetch all drivers, buses, and routes for the dropdowns
+    const allDrivers = await db.select().from(drivers);
+    const allBuses = await db.select().from(buses);
+    const allRoutes = await db.select().from(routes);
+
+    // Drizzle returns Date objects, but they are not serializable for client components.
+    // Convert them to ISO strings.
+    const serializableShifts = allShifts.map(shift => ({
+        ...shift,
+        shiftStart: shift.shiftStart.toISOString(),
+        shiftEnd: shift.shiftEnd.toISOString(),
+    }));
+
+
+    return {
+        shifts: serializableShifts,
+        drivers: allDrivers,
+        buses: allBuses,
+        routes: allRoutes,
+    };
+}
+
+export default async function ShiftsPage() {
+    const { shifts, drivers, buses, routes } = await getShiftsData();
+
+    return (
+        <ShiftsClientPage
+            initialShifts={shifts}
+            drivers={drivers}
+            buses={buses}
+            routes={routes}
+        />
+    );
+}
