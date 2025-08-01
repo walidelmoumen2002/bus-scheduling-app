@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { shifts, drivers, buses, routes } from '@/db/schema';
 import { eq, and, or, lt, gt } from 'drizzle-orm';
+import { getUser } from '@/lib/session';
 
 // GET all shifts with related data
 export async function GET() {
@@ -29,6 +30,10 @@ export async function GET() {
 
 // POST a new shift
 export async function POST(request: NextRequest) {
+    const user = await getUser();
+    if (user?.role !== 'admin' && user?.role !== 'dispatcher') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     try {
         const { driverId, busId, routeId, shiftStart, shiftEnd } = await request.json();
 

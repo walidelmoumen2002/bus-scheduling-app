@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -18,7 +17,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogDescription, // Import DialogDescription
+    DialogDescription,
 } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 
@@ -39,7 +38,6 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
     const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [currentDriver, setCurrentDriver] = useState<Partial<Driver> | null>(null);
-    const router = useRouter();
     const canManage = user.role === 'admin' || user.role === 'dispatcher';
 
     const handleAddNew = () => {
@@ -56,7 +54,7 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
         e.preventDefault();
         if (!currentDriver) return;
 
-        const isEditing = 'id' in currentDriver;
+        const isEditing = 'id' in currentDriver && currentDriver.id;
         const url = isEditing ? `/api/drivers/${currentDriver.id}` : '/api/drivers';
         const method = isEditing ? 'PUT' : 'POST';
 
@@ -67,9 +65,14 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
         });
 
         if (response.ok) {
+            const savedDriver = await response.json();
+            if (isEditing) {
+                setDrivers(drivers.map(d => d.id === savedDriver.id ? savedDriver : d));
+            } else {
+                setDrivers([...drivers, savedDriver]);
+            }
             setIsDialogOpen(false);
             setCurrentDriver(null);
-            router.refresh();
         } else {
             const data = await response.json();
             alert(`Failed to save driver: ${data.error || 'Unknown error'}`);
@@ -79,14 +82,14 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
     const handleDeleteDriver = async (id: number) => {
         if (!confirm('Are you sure you want to delete this driver?')) return;
 
-        const response = await fetch('/api/drivers', {
+        const response = await fetch(`/api/drivers`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id }),
         });
 
         if (response.ok) {
-            router.refresh();
+            setDrivers(drivers.filter(driver => driver.id !== id));
         } else {
             alert('Failed to delete driver');
         }
@@ -103,7 +106,6 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{currentDriver && currentDriver.id ? 'Edit Driver' : 'Add New Driver'}</DialogTitle>
-                        {/* FIX: Add the DialogDescription for accessibility */}
                         <DialogDescription>
                             {currentDriver && currentDriver.id
                                 ? "Make changes to the driver's details below."
@@ -152,7 +154,7 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
                             <TableHead>Name</TableHead>
                             <TableHead>License Number</TableHead>
                             <TableHead>Available</TableHead>
-                            <TableHead>Actions</TableHead>
+                            {canManage && <TableHead>Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -162,14 +164,14 @@ export default function DriversClientPage({ initialDrivers, user }: { initialDri
                                 <TableCell>{driver.name}</TableCell>
                                 <TableCell>{driver.licenseNumber}</TableCell>
                                 <TableCell>{driver.available ? 'Yes' : 'No'}</TableCell>
-                                <TableCell>
-                                    {canManage && (
+                                {canManage && (
+                                    <TableCell>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={() => handleEdit(driver)}>Edit</Button>
                                             <Button variant="destructive" size="sm" onClick={() => handleDeleteDriver(driver.id)}>Delete</Button>
                                         </div>
-                                    )}
-                                </TableCell>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>

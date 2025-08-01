@@ -1,33 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bus Scheduling App
+
+This is a [Next.js](https://nextjs.org) application for managing bus schedules, drivers, routes, and shifts. It features role-based access control for administrators, dispatchers, and viewers.
 
 ## Getting Started
 
-First, run the development server:
+Follow these instructions to get the project running on your local machine.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Prerequisites
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- [Node.js](https://nodejs.org/) (v18 or later recommended)
+- [PostgreSQL](https://www.postgresql.org/)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Installation & Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd bus-scheduling-app
+    ```
 
-## Learn More
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
 
-To learn more about Next.js, take a look at the following resources:
+3.  **Set up environment variables:**
+    - Copy the `.env.example` file to a new file named `.env.local`.
+    - Update `.env.local` with your PostgreSQL database connection string and a secure JWT secret.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4.  **Run database migrations:**
+    This will create the necessary tables in your database based on the schema defined in `src/db/schema.ts`.
+    ```bash
+    npx drizzle-kit migrate
+    ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+5.  **Seed the database:**
+    This command populates the database with initial sample data, including test users, drivers, buses, and routes.
+    ```bash
+    npm run db:seed
+    ```
+
+6.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
+
+---
+
+### Test Users
+
+You can use the following credentials to log in with different roles. The passwords are set in the seed script (`src/db/seed.ts`).
+
+-   **Admin:**
+    -   **Username:** `admin`
+    -   **Password:** `admin123`
+-   **Dispatcher:**
+    -   **Username:** `dispatcher`
+    -   **Password:** `dispatcher123`
+-   **Viewer:**
+    -   **Username:** `viewer`
+    -   **Password:** `viewer123`
+
+---
 
 ## Deploy on Vercel
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { routes } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { getUser } from '@/lib/session';
 
 // GET all routes
 export async function GET() {
@@ -16,6 +17,10 @@ export async function GET() {
 
 // POST a new route
 export async function POST(request: NextRequest) {
+    const user = await getUser();
+    if (user?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     try {
         const { origin, destination, estimatedDurationMinutes } = await request.json();
 
@@ -38,6 +43,10 @@ export async function POST(request: NextRequest) {
 
 // DELETE a route
 export async function DELETE(request: NextRequest) {
+    const user = await getUser();
+    if (user?.role !== 'admin') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     try {
         const { id } = await request.json();
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -18,7 +17,7 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
+    DialogDescription,
 } from "@/components/ui/dialog";
 
 // Define the type for a route based on your schema
@@ -31,31 +30,45 @@ type Route = {
 
 export default function RoutesClientPage({ initialRoutes }: { initialRoutes: Route[] }) {
     const [routes, setRoutes] = useState<Route[]>(initialRoutes);
-    const [origin, setOrigin] = useState('');
-    const [destination, setDestination] = useState('');
-    const [estimatedDurationMinutes, setEstimatedDurationMinutes] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const router = useRouter();
+    const [currentRoute, setCurrentRoute] = useState<Partial<Route> | null>(null);
 
-    const handleAddRoute = async (e: React.FormEvent) => {
+    const handleAddNew = () => {
+        setCurrentRoute({ origin: '', destination: '', estimatedDurationMinutes: 0 });
+        setIsDialogOpen(true);
+    };
+
+    const handleEdit = (route: Route) => {
+        setCurrentRoute({ ...route });
+        setIsDialogOpen(true);
+    };
+
+    const handleSaveRoute = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!currentRoute) return;
 
-        const response = await fetch('/api/routes', {
-            method: 'POST',
+        const isEditing = 'id' in currentRoute && currentRoute.id;
+        const url = isEditing ? `/api/routes/${currentRoute.id}` : '/api/routes';
+        const method = isEditing ? 'PUT' : 'POST';
+
+        const response = await fetch(url, {
+            method: method,
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ origin, destination, estimatedDurationMinutes }),
+            body: JSON.stringify(currentRoute),
         });
 
         if (response.ok) {
-            const newRoute = await response.json();
-            setRoutes([...routes, newRoute]);
-            setOrigin('');
-            setDestination('');
-            setEstimatedDurationMinutes('');
+            const savedRoute = await response.json();
+            if (isEditing) {
+                setRoutes(routes.map(r => r.id === savedRoute.id ? savedRoute : r));
+            } else {
+                setRoutes([...routes, savedRoute]);
+            }
             setIsDialogOpen(false);
-            router.refresh(); // Refresh the page to show the new route
+            setCurrentRoute(null);
         } else {
-            alert('Failed to add route');
+            const data = await response.json();
+            alert(`Failed to save route: ${data.error || 'Unknown error'}`);
         }
     };
 
@@ -70,7 +83,6 @@ export default function RoutesClientPage({ initialRoutes }: { initialRoutes: Rou
 
         if (response.ok) {
             setRoutes(routes.filter(route => route.id !== id));
-            router.refresh(); // Refresh the page
         } else {
             alert('Failed to delete route');
         }
@@ -80,32 +92,53 @@ export default function RoutesClientPage({ initialRoutes }: { initialRoutes: Rou
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Manage Routes</h1>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button>Add New Route</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Route</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddRoute} className="grid gap-4 py-4">
+                <Button onClick={handleAddNew}>Add New Route</Button>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{currentRoute && currentRoute.id ? 'Edit Route' : 'Add New Route'}</DialogTitle>
+                        <DialogDescription>
+                            {currentRoute && currentRoute.id
+                                ? "Update the route's details."
+                                : "Enter the details for the new route."}
+                        </DialogDescription>
+                    </DialogHeader>
+                    {currentRoute && (
+                        <form onSubmit={handleSaveRoute} className="grid gap-4 py-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="origin">Origin</Label>
-                                <Input id="origin" value={origin} onChange={(e) => setOrigin(e.target.value)} required />
+                                <Input
+                                    id="origin"
+                                    value={currentRoute.origin || ''}
+                                    onChange={(e) => setCurrentRoute({ ...currentRoute, origin: e.target.value })}
+                                    required
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="destination">Destination</Label>
-                                <Input id="destination" value={destination} onChange={(e) => setDestination(e.target.value)} required />
+                                <Input
+                                    id="destination"
+                                    value={currentRoute.destination || ''}
+                                    onChange={(e) => setCurrentRoute({ ...currentRoute, destination: e.target.value })}
+                                    required
+                                />
                             </div>
                             <div className="grid gap-2">
                                 <Label htmlFor="estimatedDurationMinutes">Estimated Duration (minutes)</Label>
-                                <Input id="estimatedDurationMinutes" type="number" value={estimatedDurationMinutes} onChange={(e) => setEstimatedDurationMinutes(e.target.value)} required />
+                                <Input
+                                    id="estimatedDurationMinutes"
+                                    type="number"
+                                    value={currentRoute.estimatedDurationMinutes || ''}
+                                    onChange={(e) => setCurrentRoute({ ...currentRoute, estimatedDurationMinutes: Number(e.target.value) })}
+                                    required
+                                />
                             </div>
-                            <Button type="submit">Add Route</Button>
+                            <Button type="submit">Save Route</Button>
                         </form>
-                    </DialogContent>
-                </Dialog>
-            </div>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <div className="border rounded-lg shadow-sm">
                 <Table>
@@ -126,8 +159,10 @@ export default function RoutesClientPage({ initialRoutes }: { initialRoutes: Rou
                                 <TableCell>{route.destination}</TableCell>
                                 <TableCell>{route.estimatedDurationMinutes}</TableCell>
                                 <TableCell>
-                                    <Button variant="outline" size="sm" className="mr-2" disabled>Edit</Button>
-                                    <Button variant="destructive" size="sm" onClick={() => handleDeleteRoute(route.id)}>Delete</Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => handleEdit(route)}>Edit</Button>
+                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteRoute(route.id)}>Delete</Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -42,18 +41,22 @@ type Shift = {
     shiftStart: string;
     shiftEnd: string;
 };
+type User = {
+    userId: number;
+    role: string;
+};
 
 interface ShiftsClientPageProps {
     initialShifts: Shift[];
     drivers: Driver[];
     buses: Bus[];
     routes: Route[];
+    user: User | null;
 }
 
-export default function ShiftsClientPage({ initialShifts, drivers, buses, routes }: ShiftsClientPageProps) {
+export default function ShiftsClientPage({ initialShifts, drivers, buses, routes, user }: ShiftsClientPageProps) {
     const [shifts, setShifts] = useState<Shift[]>(initialShifts);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const router = useRouter();
 
     // Form state
     const [driverId, setDriverId] = useState<string>('');
@@ -67,6 +70,8 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
     const [dateFilter, setDateFilter] = useState('');
     const [driverFilter, setDriverFilter] = useState('all');
     const [busFilter, setBusFilter] = useState('all');
+
+    const canManage = user?.role === 'admin' || user?.role === 'dispatcher';
 
     const filteredShifts = useMemo(() => {
         return shifts.filter(shift => {
@@ -113,9 +118,24 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
         });
 
         if (response.ok) {
+            const newShift = await response.json();
+            const driver = drivers.find(d => d.id === newShift.driverId);
+            const bus = buses.find(b => b.id === newShift.busId);
+            const route = routes.find(r => r.id === newShift.routeId);
+
+            const newShiftWithDetails: Shift = {
+                ...newShift,
+                driverName: driver?.name ?? null,
+                busPlateNumber: bus?.plateNumber ?? null,
+                routeOrigin: route?.origin ?? null,
+                routeDestination: route?.destination ?? null,
+                shiftStart: newShift.shiftStart,
+                shiftEnd: newShift.shiftEnd
+            };
+
+            setShifts([...shifts, newShiftWithDetails]);
             resetForm();
             setIsDialogOpen(false);
-            router.refresh();
         } else {
             const data = await response.json();
             setError(data.error || 'Failed to add shift');
@@ -126,84 +146,86 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Shift Schedule</h1>
-                <Dialog open={isDialogOpen} onOpenChange={(open) => {
-                    setIsDialogOpen(open);
-                    if (!open) resetForm();
-                }}>
-                    <DialogTrigger asChild>
-                        <Button>Assign New Shift</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Assign New Shift</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleAddShift} className="grid gap-4 py-4">
-                            {/* Driver Select */}
-                            <div className="grid gap-2">
-                                <Label htmlFor="driver">Driver</Label>
-                                <Select value={driverId} onValueChange={setDriverId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a driver" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {drivers.map(driver => (
-                                            <SelectItem key={driver.id} value={String(driver.id)}>
-                                                {driver.name} ({driver.licenseNumber})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                {canManage &&
+                    <Dialog open={isDialogOpen} onOpenChange={(open) => {
+                        setIsDialogOpen(open);
+                        if (!open) resetForm();
+                    }}>
+                        <DialogTrigger asChild>
+                            <Button>Assign New Shift</Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Assign New Shift</DialogTitle>
+                            </DialogHeader>
+                            <form onSubmit={handleAddShift} className="grid gap-4 py-4">
+                                {/* Driver Select */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="driver">Driver</Label>
+                                    <Select value={driverId} onValueChange={setDriverId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a driver" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {drivers.map(driver => (
+                                                <SelectItem key={driver.id} value={String(driver.id)}>
+                                                    {driver.name} ({driver.licenseNumber})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            {/* Bus Select */}
-                            <div className="grid gap-2">
-                                <Label htmlFor="bus">Bus</Label>
-                                <Select value={busId} onValueChange={setBusId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a bus" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {buses.map(bus => (
-                                            <SelectItem key={bus.id} value={String(bus.id)}>
-                                                {bus.plateNumber} (Capacity: {bus.capacity})
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                {/* Bus Select */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="bus">Bus</Label>
+                                    <Select value={busId} onValueChange={setBusId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a bus" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {buses.map(bus => (
+                                                <SelectItem key={bus.id} value={String(bus.id)}>
+                                                    {bus.plateNumber} (Capacity: {bus.capacity})
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            {/* Route Select */}
-                            <div className="grid gap-2">
-                                <Label htmlFor="route">Route</Label>
-                                <Select value={routeId} onValueChange={setRouteId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a route" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {routes.map(route => (
-                                            <SelectItem key={route.id} value={String(route.id)}>
-                                                {route.origin} to {route.destination}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                                {/* Route Select */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="route">Route</Label>
+                                    <Select value={routeId} onValueChange={setRouteId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select a route" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {routes.map(route => (
+                                                <SelectItem key={route.id} value={String(route.id)}>
+                                                    {route.origin} to {route.destination}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
 
-                            {/* Shift Timestamps */}
-                            <div className="grid gap-2">
-                                <Label htmlFor="shiftStart">Shift Start</Label>
-                                <Input id="shiftStart" type="datetime-local" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)} required />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="shiftEnd">Shift End</Label>
-                                <Input id="shiftEnd" type="datetime-local" value={shiftEnd} onChange={(e) => setShiftEnd(e.target.value)} required />
-                            </div>
+                                {/* Shift Timestamps */}
+                                <div className="grid gap-2">
+                                    <Label htmlFor="shiftStart">Shift Start</Label>
+                                    <Input id="shiftStart" type="datetime-local" value={shiftStart} onChange={(e) => setShiftStart(e.target.value)} required />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="shiftEnd">Shift End</Label>
+                                    <Input id="shiftEnd" type="datetime-local" value={shiftEnd} onChange={(e) => setShiftEnd(e.target.value)} required />
+                                </div>
 
-                            {error && <p className="text-sm text-red-500">{error}</p>}
-                            <Button type="submit">Assign Shift</Button>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                                {error && <p className="text-sm text-red-500">{error}</p>}
+                                <Button type="submit">Assign Shift</Button>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                }
             </div>
 
             {/* --- FILTER CONTROLS --- */}

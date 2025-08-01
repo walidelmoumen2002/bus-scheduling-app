@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { drivers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
+import { getUser } from '@/lib/session';
 
 // GET all drivers
 export async function GET() {
@@ -16,14 +17,18 @@ export async function GET() {
 
 // POST a new driver
 export async function POST(request: NextRequest) {
+    const user = await getUser();
+    if (user?.role !== 'admin' && user?.role !== 'dispatcher') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     try {
-        const { name, licenseNumber } = await request.json();
+        const { name, licenseNumber, available } = await request.json();
 
         if (!name || !licenseNumber) {
             return NextResponse.json({ error: 'Name and license number are required' }, { status: 400 });
         }
 
-        const newDriver = await db.insert(drivers).values({ name, licenseNumber }).returning();
+        const newDriver = await db.insert(drivers).values({ name, licenseNumber, available: available ?? true }).returning();
 
         return NextResponse.json(newDriver[0], { status: 201 });
     } catch (error) {
@@ -34,6 +39,10 @@ export async function POST(request: NextRequest) {
 
 // DELETE a driver
 export async function DELETE(request: NextRequest) {
+    const user = await getUser();
+    if (user?.role !== 'admin' && user?.role !== 'dispatcher') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
     try {
         const { id } = await request.json();
 
