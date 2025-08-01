@@ -1,7 +1,7 @@
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { users, drivers, buses, routes } from './schema';
 import postgres from 'postgres';
-import *s dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 
 dotenv.config({ path: '.env.local' });

@@ -4,47 +4,44 @@ import { jwtVerify } from 'jose';
 
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
-// List of pages that require admin access
-const ADMIN_PAGES = ['/api/users', '/api/buses/delete', '/api/drivers/delete'];
-
-// List of pages that require dispatcher access
-const DISPATCHER_PAGES = ['/api/drivers', '/api/shifts', '/api/routes'];
-
-
 export async function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const token = request.cookies.get('token')?.value;
 
-    // Allow login and static files to be accessed without a token
-    if (pathname.startsWith('/login') || pathname.startsWith('/_next') || pathname === '/') {
-        return NextResponse.next();
-    }
-
+    // Redirect to login if there's no token and the user is not trying to log in
     if (!token) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
+    // Verify the token
     try {
         const { payload } = await jwtVerify(token, SECRET_KEY);
         const role = payload.role as string;
 
-        // Admin Access Control
-        if (ADMIN_PAGES.some(p => pathname.startsWith(p)) && role !== 'admin') {
-            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
-        }
+        // --- API Authorization Logic ---
+        const ADMIN_API_PAGES = ['/api/users', '/api/buses/delete', '/api/drivers/delete'];
+        const DISPATCHER_API_PAGES = ['/api/drivers', '/api/shifts', '/api/routes'];
 
-        // Dispatcher Access Control
-        if (DISPATCHER_PAGES.some(p => pathname.startsWith(p)) && role !== 'admin' && role !== 'dispatcher') {
-            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+        if (ADMIN_API_PAGES.some(p => pathname.startsWith(p)) && role !== 'admin') {
+            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
         }
+        if (DISPATCHER_API_PAGES.some(p => pathname.startsWith(p)) && role !== 'admin' && role !== 'dispatcher') {
+            return new NextResponse(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+        }
+        // --- End of API Authorization Logic ---
 
+        // If the token is valid, allow the request to proceed
         return NextResponse.next();
+
     } catch (err) {
-        // If token is invalid, redirect to login
-        return NextResponse.redirect(new URL('/login', request.url));
+        // If the token is invalid (expired, malformed), redirect to login
+        const response = NextResponse.redirect(new URL('/login', request.url));
+        response.cookies.delete('token'); // Clear the invalid token
+        return response;
     }
 }
 
 export const config = {
-    matcher: ['/((?!api/auth).*)'], // Apply middleware to all routes except the auth API
+    // This matcher protects all routes except the login page, static assets, and auth API calls
+    matcher: ['/((?!login|api/auth|_next/static|_next/image|favicon.ico).*)'],
 };
