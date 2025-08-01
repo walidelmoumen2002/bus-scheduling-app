@@ -1,3 +1,5 @@
+// src/app/(app)/layout.tsx
+
 import { getUser } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import Header from '@/components/header';
@@ -8,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function AppLayout({
     children,
 }: {
-    children: React.React.Node;
+    children: React.ReactNode;
 }) {
     const user = await getUser();
 

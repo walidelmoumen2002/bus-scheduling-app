@@ -5,7 +5,7 @@ import { NextRequest } from 'next/server';
 const SECRET_KEY = new TextEncoder().encode(process.env.JWT_SECRET);
 
 export async function getUser() {
-    const token = cookies().get('token')?.value;
+    const token = (await cookies()).get('token')?.value;
 
     if (!token) {
         return null;
