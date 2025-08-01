@@ -25,14 +25,12 @@ export default function Header({ user }: { user: User }) {
 
                 <Link href="/schedule" className="text-sm font-medium hover:underline">Schedule</Link>
 
-
                 {(user.role === 'admin' || user.role === 'dispatcher') && (
                     <>
                         <Link href="/drivers" className="text-sm font-medium hover:underline">Drivers</Link>
                         <Link href="/shifts" className="text-sm font-medium hover:underline">Shifts</Link>
                     </>
                 )}
-
 
                 {user.role === 'admin' && (
                     <>

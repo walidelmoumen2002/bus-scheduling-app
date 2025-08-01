@@ -8,7 +8,6 @@ import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
 
 async function getShiftsData() {
-
     const allShifts = await db.select({
         id: shifts.id,
         driverName: drivers.name,
@@ -24,7 +23,6 @@ async function getShiftsData() {
         .leftJoin(routes, eq(shifts.routeId, routes.id))
         .orderBy(shifts.shiftStart);
 
-
     const allDrivers = await db.select().from(drivers);
     const allBuses = await db.select().from(buses);
     const allRoutes = await db.select().from(routes);
@@ -34,7 +32,6 @@ async function getShiftsData() {
         shiftStart: shift.shiftStart.toISOString(),
         shiftEnd: shift.shiftEnd.toISOString(),
     }));
-
 
     return {
         shifts: serializableShifts,
@@ -49,6 +46,11 @@ export default async function ShiftsPage() {
 
     if (!user) {
         redirect('/login');
+    }
+
+    // Protect this route for admins and dispatchers only
+    if (user.role === 'viewer') {
+        redirect('/schedule');
     }
 
     const { shifts, drivers, buses, routes } = await getShiftsData();

@@ -20,17 +20,26 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog";
 
-
 type Bus = {
     id: number;
     plateNumber: string;
     capacity: number;
 };
 
-export default function BusesClientPage({ initialBuses }: { initialBuses: Bus[] }) {
+// Define the User type
+type User = {
+    userId: number;
+    role: string;
+};
+
+// Update the props to accept both initialBuses and user
+export default function BusesClientPage({ initialBuses, user }: { initialBuses: Bus[], user: User }) {
     const [buses, setBuses] = useState<Bus[]>(initialBuses);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [currentBus, setCurrentBus] = useState<Partial<Bus> | null>(null);
+
+    // Check if the user has the 'admin' role
+    const canManage = user.role === 'admin';
 
     const handleAddNew = () => {
         setCurrentBus({ plateNumber: '', capacity: 0 });
@@ -91,7 +100,8 @@ export default function BusesClientPage({ initialBuses }: { initialBuses: Bus[] 
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold">Manage Buses</h1>
-                <Button onClick={handleAddNew}>Add New Bus</Button>
+                {/* Only show Add button to admins */}
+                {canManage && <Button onClick={handleAddNew}>Add New Bus</Button>}
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -138,7 +148,8 @@ export default function BusesClientPage({ initialBuses }: { initialBuses: Bus[] 
                             <TableHead>ID</TableHead>
                             <TableHead>Plate Number</TableHead>
                             <TableHead>Capacity</TableHead>
-                            <TableHead>Actions</TableHead>
+                            {/* Only show Actions column to admins */}
+                            {canManage && <TableHead>Actions</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -147,12 +158,15 @@ export default function BusesClientPage({ initialBuses }: { initialBuses: Bus[] 
                                 <TableCell>{bus.id}</TableCell>
                                 <TableCell>{bus.plateNumber}</TableCell>
                                 <TableCell>{bus.capacity}</TableCell>
-                                <TableCell>
-                                    <div className="flex gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => handleEdit(bus)}>Edit</Button>
-                                        <Button variant="destructive" size="sm" onClick={() => handleDeleteBus(bus.id)}>Delete</Button>
-                                    </div>
-                                </TableCell>
+                                {/* Only show action buttons to admins */}
+                                {canManage && (
+                                    <TableCell>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" onClick={() => handleEdit(bus)}>Edit</Button>
+                                            <Button variant="destructive" size="sm" onClick={() => handleDeleteBus(bus.id)}>Delete</Button>
+                                        </div>
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>

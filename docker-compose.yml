@@ -1,0 +1,30 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: walidelmoumen
+      POSTGRES_PASSWORD: '' # Your password is empty
+      POSTGRES_DB: bus_scheduling
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: always
+    ports:
+      - '3000:3000'
+    environment:
+      DATABASE_URL: postgresql://walidelmoumen:@db:5432/bus_scheduling
+      JWT_SECRET: "v6jjdkOFrX2qbHaFl/2Ljp+ZqxiQ3fOpDBkn59wOhNk="
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

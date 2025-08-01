@@ -33,7 +33,6 @@ async function getShiftsData() {
     const allBuses = await db.select().from(buses);
     const allRoutes = await db.select().from(routes);
 
-
     return {
         shifts: serializableShifts,
         drivers: allDrivers,
@@ -58,6 +57,7 @@ export default async function SchedulePage() {
             buses={buses}
             routes={routes}
             user={user}
+            readOnly={true}
         />
     );
 }

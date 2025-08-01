@@ -53,13 +53,14 @@ interface ShiftsClientPageProps {
     buses: Bus[];
     routes: Route[];
     user: User;
+    readOnly?: boolean;
 }
 
-export default function ShiftsClientPage({ initialShifts, drivers, buses, routes, user }: ShiftsClientPageProps) {
+export default function ShiftsClientPage({ initialShifts, drivers, buses, routes, user, readOnly = false }: ShiftsClientPageProps) {
     const [shifts, setShifts] = useState<Shift[]>(initialShifts);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
-    const canAssignShift = user.role === 'admin' || user.role === 'dispatcher';
+    const canAssignShift = (user.role === 'admin' || user.role === 'dispatcher') && !readOnly;
 
 
     const [driverId, setDriverId] = useState<string>('');
@@ -131,7 +132,7 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
     return (
         <div className="container mx-auto">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Shift Schedule</h1>
+                <h1 className="text-2xl font-bold">{readOnly ? 'Bus Schedule' : 'Manage Shifts'}</h1>
                 {canAssignShift && (
                     <Dialog open={isDialogOpen} onOpenChange={(open) => {
                         setIsDialogOpen(open);
@@ -258,7 +259,6 @@ export default function ShiftsClientPage({ initialShifts, drivers, buses, routes
                     </Button>
                 </div>
             </div>
-
 
             <div className="border rounded-lg shadow-sm">
                 <Table>
