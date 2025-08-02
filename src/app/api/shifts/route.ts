@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { shifts, drivers, buses, routes } from '@/db/schema';
-import { eq, and, or, lt, gt } from 'drizzle-orm';
+import { eq, and, lt, gt } from 'drizzle-orm';
 import { getUser } from '@/lib/session';
 
 

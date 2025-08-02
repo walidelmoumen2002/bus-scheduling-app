@@ -57,7 +57,7 @@ interface ShiftsClientPageProps {
 }
 
 export default function ShiftsClientPage({ initialShifts, drivers, buses, routes, user, readOnly = false }: ShiftsClientPageProps) {
-    const [shifts, setShifts] = useState<Shift[]>(initialShifts);
+    const [shifts] = useState<Shift[]>(initialShifts);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const router = useRouter();
     const canAssignShift = (user.role === 'admin' || user.role === 'dispatcher') && !readOnly;

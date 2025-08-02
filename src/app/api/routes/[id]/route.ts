@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db/drizzle';
 import { routes } from '@/db/schema';

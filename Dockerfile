@@ -11,6 +11,13 @@ FROM node:18-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# Add ARG and ENV for build-time variables
+ARG DATABASE_URL
+ENV DATABASE_URL=$DATABASE_URL
+ARG JWT_SECRET
+ENV JWT_SECRET=$JWT_SECRET
+
 RUN npm run build
 
 # Stage 3: Production image
