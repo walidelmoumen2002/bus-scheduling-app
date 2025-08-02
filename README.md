@@ -2,14 +2,31 @@
 
 This is a [Next.js](https://nextjs.org) application for managing bus schedules, drivers, routes, and shifts. It features role-based access control for administrators, dispatchers, and viewers.
 
+## Features
+
+* **Role-Based Access Control:** Different user roles (admin, dispatcher, viewer) with varying permissions.
+* **Driver Management:** Add, edit, and view driver information.
+* **Bus Management:** Add, edit, and view bus details.
+* **Route Management:** Create and manage bus routes.
+* **Shift Scheduling:** Assign drivers, buses, and routes to create shifts.
+
+## Technologies Used
+
+* **Framework:** Next.js
+* **Database:** PostgreSQL
+* **ORM:** Drizzle ORM
+* **Authentication:** JWT
+* **UI:** Tailwind CSS, shadcn/ui
+
 ## Getting Started
 
 Follow these instructions to get the project running on your local machine.
 
 ### Prerequisites
 
-- [Node.js](https://nodejs.org/) (v18 or later recommended)
-- [PostgreSQL](https://www.postgresql.org/)
+* [Node.js](https://nodejs.org/) (v18 or later recommended)
+* [PostgreSQL](https://www.postgresql.org/)
+* [Docker](https://www.docker.com/) (optional, for running with Docker)
 
 ### Installation & Setup
 
@@ -25,8 +42,8 @@ Follow these instructions to get the project running on your local machine.
     ```
 
 3.  **Set up environment variables:**
-    - Copy the `.env.example` file to a new file named `.env.local`.
-    - Update `.env.local` with your PostgreSQL database connection string and a secure JWT secret.
+    * Copy the `.env.example` file to a new file named `.env.local`.
+    * Update `.env.local` with your PostgreSQL database connection string and a secure JWT secret.
 
 4.  **Run database migrations:**
     This will create the necessary tables in your database based on the schema defined in `src/db/schema.ts`.
@@ -47,23 +64,37 @@ Follow these instructions to get the project running on your local machine.
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
----
+### Running with Docker
 
-### Test Users
+Alternatively, you can run the application using Docker Compose:
+
+1.  **Build and start the services:**
+    ```bash
+    docker-compose up -d --build
+    ```
+    The application will be available at [http://localhost:3000](http://localhost:3000).
+
+## Available Scripts
+
+* `npm run dev`: Starts the development server.
+* `npm run build`: Builds the application for production.
+* `npm run start`: Starts a production server.
+* `npm run lint`: Runs the linter.
+* `npm run db:seed`: Seeds the database with initial data.
+
+## Test Users
 
 You can use the following credentials to log in with different roles. The passwords are set in the seed script (`src/db/seed.ts`).
 
--   **Admin:**
-    -   **Username:** `admin`
-    -   **Password:** `admin123`
--   **Dispatcher:**
-    -   **Username:** `dispatcher`
-    -   **Password:** `dispatcher123`
--   **Viewer:**
-    -   **Username:** `viewer`
-    -   **Password:** `viewer123`
-
----
+* **Admin:**
+    * **Username:** `admin`
+    * **Password:** `admin123`
+* **Dispatcher:**
+    * **Username:** `dispatcher`
+    * **Password:** `dispatcher123`
+* **Viewer:**
+    * **Username:** `viewer`
+    * **Password:** `viewer123`
 
 ## Deploy on Vercel
 
